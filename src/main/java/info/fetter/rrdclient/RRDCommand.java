@@ -112,9 +112,13 @@ public abstract class RRDCommand {
 	 * @throws IOException
 	 */
 	protected ByteBuffer sendCommandToServer(String command) throws IOException {
+		boolean errorFound = false;
 		command += "\n";
 		InetSocketAddress server = new InetSocketAddress(serverAddress, serverPort);
 		SocketChannel channel = cache.get(server);
+		if(logger.isDebugEnabled()) {
+			logger.debug("Sending command : " + command);
+		}
 		ByteBuffer sendBuffer = ByteBuffer.wrap(command.getBytes());
 		ByteBuffer receiveBuffer = ByteBuffer.allocate(1024*1024);
 		int bytesWritten = channel.write(sendBuffer);
@@ -129,20 +133,22 @@ public abstract class RRDCommand {
 				logger.trace("Received " + bytesRead + " bytes from " + server);
 			int position = receiveBuffer.position();
 			if(receiveBuffer.get(--position) == '\n') {
-				boolean rewind = true;
-				while(rewind && position >= 0) {
+				int lineStart = 0;
+				while(position > 0) {
 					byte previousByte = receiveBuffer.get(--position);
-					if(previousByte == '\n')
-						rewind = false;
+					if(previousByte == 'O') {
+						lineStart = position;
+						break;
+					}
 				}
-				int lineStart = position + 1;
-				if(receiveBuffer.get(lineStart) == 'O' && receiveBuffer.get(lineStart + 1) == 'K') {
+				if(receiveBuffer.get(lineStart) == 'O' && receiveBuffer.get(lineStart + 1) == 'K' && receiveBuffer.get(lineStart + 2) == ' ') {
 					stillSomethingToRead = false;
 					logger.trace("Found OK");
 				}
-				if(receiveBuffer.get(lineStart) == 'E' && receiveBuffer.get(lineStart + 1) == 'R' && receiveBuffer.get(lineStart + 2) == 'R') {
+				if(receiveBuffer.get(lineStart) == 'O' && receiveBuffer.get(lineStart + 1) == 'R' && receiveBuffer.get(lineStart + 2) == ':') {
 					stillSomethingToRead = false;
 					logger.trace("Found ERROR");
+					errorFound = true;
 				}
 			}
 		}
@@ -150,6 +156,11 @@ public abstract class RRDCommand {
 		receiveBuffer.flip();
 		if(logger.isTraceEnabled())
 			logger.trace("Received a total of " + receiveBuffer.limit() + " bytes from " + server);
+		if(errorFound) {
+			byte[] messageBuffer = new byte[receiveBuffer.limit()];
+			receiveBuffer.get(messageBuffer);
+			throw new RRDToolError(new String(messageBuffer));
+		}
 		return receiveBuffer;
 	}
 	

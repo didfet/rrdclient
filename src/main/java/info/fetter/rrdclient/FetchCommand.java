@@ -79,8 +79,6 @@ public class FetchCommand extends RRDCommand {
 			command += " " + arg;
 		}
 		try {
-			if(logger.isDebugEnabled())
-				logger.debug("Sending command : " + command);
 			ByteBuffer response = sendCommandToServer(command);
 			WritableByteChannel channel = Channels.newChannel(out);
 			channel.write(response);
