@@ -27,7 +27,7 @@ import org.apache.log4j.Logger;
  * 
  * Bidimensional table. Used by the fetch command to return the query results.
  * 
- * The rows are indexed by date and the columns by column name.
+ * The rows are indexed by date and the columns by data source name.
  * 
  * @author Didier Fetter
  *
@@ -84,7 +84,7 @@ public class DataTable<T> {
 	}
 	
 	/**
-	 * Get a list containing all the values for a given column.
+	 * Get a list containing all the values for a given column (data source).
 	 * 
 	 * @param columnName the name of the data column
 	 * @return the data rows corresponding to the column
@@ -98,7 +98,7 @@ public class DataTable<T> {
 	}
 	
 	/**
-	 * Get the data for a given column and date. 
+	 * Get the data for a given column (data source) and date. 
 	 * 
 	 * @param columnName the name of the data column
 	 * @param date
@@ -110,7 +110,7 @@ public class DataTable<T> {
 	}
 	
 	/**
-	 * Get the data for a given column and index. 
+	 * Get the data for a given column (data source) and index (row). 
 	 * 
 	 * @param columnName the name of the data column
 	 * @param index
@@ -121,22 +121,48 @@ public class DataTable<T> {
 		return column.get(index);
 	}
 	
+	/**
+	 * Get the date for a given index (row).
+	 * 
+	 * @param index the row number
+	 * @return the corresponding date
+	 */
 	public Date getDateAtIndex(int index) {
 		return dateColumn.get(index);
 	}
 	
+	/**
+	 * Get the number of rows of this table.
+	 * 
+	 * @return the number of rows
+	 */
 	public int getNumberOfRows() {
 		return dateColumn.size();
 	}
 	
+	/**
+	 * Get the number of columns (data sources) of this table.
+	 * 
+	 * @return the number of columns
+	 */
 	public int getNumberOfColumns() {
 		return columns.size();
 	}
 	
+	/**
+	 * Get the column (data source) names.
+	 * 
+	 * @return a list containing the names
+	 */
 	public List<String> getColumnNames() {
 		return columnNames;
 	}
 	
+	/**
+	 * Get the dates (rows) of this table.
+	 * 
+	 * @return a list containing the dates
+	 */
 	public List<Date> getDates() {
 		return dateColumn;
 	}
