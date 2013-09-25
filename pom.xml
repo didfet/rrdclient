@@ -5,7 +5,8 @@
 	<artifactId>info.fetter.rrdclient</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
 	<name>RRD Client</name>
-	<description>RRD Client</description>
+	<description>Java RRDTool client</description>
+	<url>https://github.com/didfet/rrdclient</url>
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 	</properties>
@@ -17,6 +18,13 @@
 			<comments>A business-friendly OSS license</comments>
 		</license>
 	</licenses>
+	<scm>
+        <!-- See http://maven.apache.org/plugins/maven-release-plugin/examples/perform-release.html -->
+        <!-- for how to perform a release from the connection below. -->
+        <connection>scm:git:https://github.com/didfet/rrdclient</connection>
+        <developerConnection>scm:git:https://github.com/didfet/rrdclient</developerConnection>
+        <url>https://github.com/didfet/rrdclient</url>
+    </scm>
 	<build>
 		<plugins>
 			<plugin>

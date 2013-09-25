@@ -18,11 +18,9 @@ package info.fetter.rrdclient;
  */
 
 import java.awt.image.BufferedImage;
-import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;
 import java.nio.channels.Channels;
@@ -68,12 +66,20 @@ public class GraphCommand extends RRDCommand {
 			options.addOption("w", "width", true, "image width");
 			options.addOption("h", "height", true, "image height");
 			options.addOption("b", "base", true, "base value");
-			options.addOption("A", "alt-autoscale-max", false, "alternate scale algorithm");
+			options.addOption("A", "alt-autoscale", false, "alternate scale algorithm");
+			options.addOption("M", "alt-autoscale-max", false, "alternate scale algorithm (max value only)");
+			options.addOption("J", "alt-autoscale-min", false, "alternate scale algorithm (min value only)");
 			options.addOption("l", "lower-limit", true, "lower limit");
 			options.addOption("u", "upper-limit", true, "upper limit");
+			options.addOption("r", "rigid", false, "rigid boundaries");
 			options.addOption("v", "vertical-label", true, "vertical label");
 			options.addOption("E", "slope-mode", false, "enable slope mode");
-			
+			options.addOption("i", "interlaced", false, "interlaced image");
+			options.addOption("o", "logarithmic", false, "logarithmic scale");
+			options.addOption("z", "units", true, "use SI notation for logarithmic scale");
+			options.addOption("y", "y-grid", true, "Y grid step");
+			options.addOption("X", "units-exponent", true, "sets the 10**exponent scaling of the y-axis values");
+						
 			CommandLine cmd = parser.parse(options, args, false);
 			for(Option option : cmd.getOptions()) {
 				logger.trace("Parsed option : " + option.getLongOpt());
