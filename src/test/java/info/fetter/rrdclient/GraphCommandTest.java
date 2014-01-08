@@ -44,7 +44,7 @@ public class GraphCommandTest {
 		BasicConfigurator.resetConfiguration();
 	}
 
-	//@Test
+	@Test
 	public void testFetchCommand() {
 		try {
 			String[] args = new String[] {"-", "--imgformat=PNG", "--start=-86400", "--end=-300", "--title='UP0TX055 - MSI DBMail - Processes'", "--base=1000", "--height=120", "--width=500", "--alt-autoscale-max", "--lower-limit=0", "--vertical-label='processes'", "--slope-mode", "--font", "TITLE:12:", "--font", "AXIS:8:", "--font", "LEGEND:10:", "--font", "UNIT:8:", "DEF:a=\"up0tx055_ucd_hrsystemprocess_9022.rrd\":ucd_hrSystemProcess:AVERAGE AREA:a#F51D30FF:\"Running Processes\"", "GPRINT:a:LAST:\"Current\\:%8.0lf\"", "GPRINT:a:AVERAGE:\"Average\\:%8.0lf\"", "GPRINT:a:MAX:\"Maximum\\:%8.0lf\""};
