@@ -38,7 +38,7 @@ public class GraphCommandTest {
 	@BeforeClass
 	public static void setUpBeforeClass() throws Exception {
 		BasicConfigurator.configure();
-		RootLogger.getRootLogger().setLevel(TRACE);
+		RootLogger.getRootLogger().setLevel(DEBUG);
 	}
 
 	@AfterClass

@@ -21,8 +21,9 @@ import static org.apache.log4j.Level.*;
 import info.fetter.rrdclient.util.FetchServer;
 
 import java.util.Date;
-
 import java.io.File;
+import java.io.IOException;
+import java.net.URISyntaxException;
 
 import org.apache.log4j.BasicConfigurator;
 import org.apache.log4j.Logger;
@@ -37,7 +38,7 @@ public class FetchCommandTest {
 	@BeforeClass
 	public static void setUpBeforeClass() throws Exception {
 		BasicConfigurator.configure();
-		RootLogger.getRootLogger().setLevel(TRACE);
+		RootLogger.getRootLogger().setLevel(DEBUG);
 	}
 
 	@AfterClass
@@ -46,7 +47,7 @@ public class FetchCommandTest {
 	}
 
 	@Test
-	public void testFetchCommandPseudo() {
+	public void testFetchCommandOK() {
 		try {
 			String fileName = "toto.rrd";
 			String CF = "AVERAGE";
@@ -58,6 +59,16 @@ public class FetchCommandTest {
 			if(logger.isDebugEnabled())
 				e.printStackTrace();
 		}
+	}
+
+	@Test(expected = RRDToolError.class)
+	public void testFetchCommandKO() throws IOException, URISyntaxException {
+		String fileName = "toto.rrd";
+		String CF = "AVERAGE";
+		String[] args = new String[] {"--start" , "-1m", "--resolution", "86400"};
+		FetchCommand command = new FetchCommand(fileName, CF, args);
+		FetchServer server = new FetchServer(13902,new File(FetchServer.class.getClassLoader().getResource("FetchResponse2.txt").toURI()));
+		command.execute("localhost", 13902);
 	}
 
 	@Test
