@@ -18,6 +18,8 @@ package info.fetter.rrdclient;
  */
 
 import static org.apache.log4j.Level.*;
+import info.fetter.rrdclient.util.FetchServer;
+import info.fetter.rrdclient.util.GraphServer;
 
 import java.io.File;
 
@@ -45,18 +47,19 @@ public class GraphCommandTest {
 	}
 
 	@Test
-	public void testFetchCommand() {
+	public void testGraphCommandPseudo() {
 		try {
-			String[] args = new String[] {"-", "--imgformat=PNG", "--start=-86400", "--end=-300", "--title='UP0TX055 - MSI DBMail - Processes'", "--base=1000", "--height=120", "--width=500", "--alt-autoscale-max", "--lower-limit=0", "--vertical-label='processes'", "--slope-mode", "--font", "TITLE:12:", "--font", "AXIS:8:", "--font", "LEGEND:10:", "--font", "UNIT:8:", "DEF:a=\"up0tx055_ucd_hrsystemprocess_9022.rrd\":ucd_hrSystemProcess:AVERAGE AREA:a#F51D30FF:\"Running Processes\"", "GPRINT:a:LAST:\"Current\\:%8.0lf\"", "GPRINT:a:AVERAGE:\"Average\\:%8.0lf\"", "GPRINT:a:MAX:\"Maximum\\:%8.0lf\""};
+			String[] args = new String[] {"-", "--imgformat=PNG", "--start=-86400", "--end=-300", "--title='toto'", "--base=1000", "--height=120", "--width=500", "--alt-autoscale-max", "--lower-limit=0", "--vertical-label='processes'", "--slope-mode", "--font", "TITLE:12:", "--font", "AXIS:8:", "--font", "LEGEND:10:", "--font", "UNIT:8:", "DEF:a=\"toto.rrd\":ucd_hrSystemProcess:AVERAGE AREA:a#F51D30FF:\"Running Processes\"", "GPRINT:a:LAST:\"Current\\:%8.0lf\"", "GPRINT:a:AVERAGE:\"Average\\:%8.0lf\"", "GPRINT:a:MAX:\"Maximum\\:%8.0lf\""};
 			GraphCommand command = new GraphCommand(args);
-			command.execute("UP0TE003", 13900);
+			GraphServer server = new GraphServer(13901, new File(FetchServer.class.getClassLoader().getResource("GraphResponse1.png").toURI()));
+			command.execute("localhost", 13901);
 
-			ImageIO.write(command.getImage(), "png", new File("target/test1.png"));
+			ImageIO.write(command.getImage(), "png", new File("target/test2.png"));
 			
 			command = new GraphCommand(args);
-			command.execute("UP0TE003", 13900);
+			command.execute("localhost", 13901);
 			
-			ImageIO.write(command.getImage(), "gif", new File("target/test1.gif"));
+			ImageIO.write(command.getImage(), "gif", new File("target/test2.gif"));
 			
 		} catch(Exception e) {
 			if(logger.isDebugEnabled())

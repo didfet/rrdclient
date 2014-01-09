@@ -65,6 +65,7 @@ public abstract class PseudoServer implements Runnable {
 
 	private void acceptLoop() throws IOException {
 		SocketChannel clientChannel = serverChannel.accept();
+		logger.debug("Connection established : " + clientChannel);
 		threadPool.execute(new Responder(clientChannel));
 	}
 
@@ -83,7 +84,7 @@ public abstract class PseudoServer implements Runnable {
 					logger.debug("Received request : " + request);
 					ByteBuffer response = respond(request);
 					clientChannel.write(response);
-					logger.debug("Finished sending response");
+					logger.debug("Finished sending response : " + response.limit() + " bytes");
 				}
 			} catch(IOException e) {
 				logger.error(e.getMessage());
