@@ -1,7 +1,10 @@
 package info.fetter.rrdclient.util;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.net.InetSocketAddress;
+import java.nio.ByteBuffer;
 import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
 import java.util.concurrent.Executor;
@@ -39,7 +42,7 @@ public abstract class PseudoServer implements Runnable {
 	protected int port;
 	protected ServerSocketChannel serverChannel;
 	private Executor threadPool = Executors.newCachedThreadPool();
-	
+
 	public PseudoServer(int port) throws IOException {
 		logger.debug("Creating new server instance");
 		this.port = port;
@@ -48,7 +51,7 @@ public abstract class PseudoServer implements Runnable {
 		Thread acceptThread = new Thread(this,"accept-thread:port:"+port);
 		acceptThread.start();
 	}
-	
+
 	public void run() {
 		while(true) {
 			try {
@@ -59,26 +62,32 @@ public abstract class PseudoServer implements Runnable {
 			}
 		}
 	}
-	
+
 	private void acceptLoop() throws IOException {
 		SocketChannel clientChannel = serverChannel.accept();
 		threadPool.execute(new Responder(clientChannel));
 	}
-	
+
 	private class Responder implements Runnable {
 		private SocketChannel clientChannel;
-		
+
 		public Responder(SocketChannel clientChannel) {
 			this.clientChannel = clientChannel;
 		}
 
 		public void run() {
-			//TODO : parse request
-			String request = null;
-			respond(request);
+			try {
+				String request;
+				BufferedReader in = new BufferedReader(new InputStreamReader(clientChannel.socket().getInputStream()));
+				while((request = in.readLine()) != null) { 
+					ByteBuffer response = respond(request);
+					clientChannel.write(response);
+				}
+			} catch(IOException e) {
+				logger.error(e.getMessage());
+			}
 		}
-		
 	}
-	
-	protected abstract void respond(String request);
+
+	protected abstract ByteBuffer respond(String request);
 }
