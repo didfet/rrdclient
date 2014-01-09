@@ -18,8 +18,11 @@ package info.fetter.rrdclient;
  */
 
 import static org.apache.log4j.Level.*;
+import info.fetter.rrdclient.util.FetchServer;
 
 import java.util.Date;
+
+import java.io.File;
 
 import org.apache.log4j.BasicConfigurator;
 import org.apache.log4j.Logger;
@@ -43,7 +46,7 @@ public class FetchCommandTest {
 	}
 
 	//@Test
-	public void testFetchCommand() {
+	public void testFetchCommandReal() {
 		try {
 			//String fileName = "up0te003_-_serveur_cacti_load_15min_13526.rrd";
 			String fileName = "up0te003_-_serveur_cacti_apache_total_kbytes_13642.rrd";
@@ -60,16 +63,31 @@ public class FetchCommandTest {
 			logger.debug("Extracted value : " + value);
 			value = data.getData("apache_total_kbytes", data.getNumberOfRows()-3);
 			logger.debug("Extracted value : " + value);
-			
+
 			command = new FetchCommand(fileName, CF, args);
 			command.execute("UP0TE003", 13900);
-			
+
 		} catch(Exception e) {
 			if(logger.isDebugEnabled())
 				e.printStackTrace();
 		}
 	}
-	
+
+	@Test
+	public void testFetchCommandPseudo() {
+		try {
+			String fileName = "toto.rrd";
+			String CF = "AVERAGE";
+			String[] args = new String[] {"--start" , "-1m", "--resolution", "86400"};
+			FetchCommand command = new FetchCommand(fileName, CF, args);
+			FetchServer server = new FetchServer(13900,new File(FetchServer.class.getClassLoader().getResource("FetchResponse1.txt").toURI()));
+			command.execute("localhost", 13900);
+		} catch(Exception e) {
+			if(logger.isDebugEnabled())
+				e.printStackTrace();
+		}
+	}
+
 	@Test
 	public void dummyTest() {}
 }

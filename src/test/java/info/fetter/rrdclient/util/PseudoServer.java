@@ -38,7 +38,7 @@ import org.apache.log4j.Logger;
  *
  */
 public abstract class PseudoServer implements Runnable {
-	private static Logger logger = Logger.getLogger(PseudoServer.class);
+	protected static Logger logger = Logger.getLogger(PseudoServer.class);
 	protected int port;
 	protected ServerSocketChannel serverChannel;
 	private Executor threadPool = Executors.newCachedThreadPool();
@@ -46,7 +46,7 @@ public abstract class PseudoServer implements Runnable {
 	public PseudoServer(int port) throws IOException {
 		logger.debug("Creating new server instance");
 		this.port = port;
-		ServerSocketChannel serverChannel = ServerSocketChannel.open();
+		serverChannel = ServerSocketChannel.open();
 		serverChannel.socket().bind(new InetSocketAddress(port));
 		Thread acceptThread = new Thread(this,"accept-thread:port:"+port);
 		acceptThread.start();
@@ -79,9 +79,11 @@ public abstract class PseudoServer implements Runnable {
 			try {
 				String request;
 				BufferedReader in = new BufferedReader(new InputStreamReader(clientChannel.socket().getInputStream()));
-				while((request = in.readLine()) != null) { 
+				while((request = in.readLine()) != null) {
+					logger.debug("Received request : " + request);
 					ByteBuffer response = respond(request);
 					clientChannel.write(response);
+					logger.debug("Finished sending response");
 				}
 			} catch(IOException e) {
 				logger.error(e.getMessage());
@@ -89,5 +91,11 @@ public abstract class PseudoServer implements Runnable {
 		}
 	}
 
+	/**
+	 * Used by subclasses. The request may be parsed before returning the response in the ByteBuffer.
+	 * 
+	 * @param request The request received on the socket channel
+	 * @return ByteBuffer containing the result of the command
+	 */
 	protected abstract ByteBuffer respond(String request);
 }
