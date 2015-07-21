@@ -21,6 +21,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.net.SocketTimeoutException;
 import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
 import java.nio.channels.SocketChannel;
@@ -41,19 +42,19 @@ public abstract class RRDCommand {
 	protected int serverPort;
 	protected double userTime, systemTime;
 	String returnCode;
-	
+
 	/**
 	 * Execute the RRD command and send the result to an OutputStream. Server address and port must have been set before.
 	 * 
 	 * @param out the OutputStream the result will be sent to
 	 */
 	public abstract void execute(OutputStream out);
-	
+
 	/**
 	 * Execute the RRD command and send the result to standard output. Server address and port must have been set before.
 	 */
 	public abstract void execute();
-	
+
 	/**
 	 * 
 	 * Execute the RRD command and send the result to an OutputStream.
@@ -67,7 +68,7 @@ public abstract class RRDCommand {
 		setServerPort(port);
 		execute(out);
 	}
-	
+
 	/**
 	 * 
 	 * Execute the RRD command and send the result to standard output.
@@ -80,7 +81,7 @@ public abstract class RRDCommand {
 		setServerPort(port);
 		execute();
 	}
-	
+
 	/**
 	 * Set RRD server address.
 	 * 
@@ -93,7 +94,7 @@ public abstract class RRDCommand {
 			throw new IllegalArgumentException(e);
 		}
 	}
-	
+
 	/**
 	 * Set RRD server port.
 	 * 
@@ -102,8 +103,8 @@ public abstract class RRDCommand {
 	public void setServerPort(int serverPort) {
 		this.serverPort = serverPort;
 	}
-	
-	
+
+
 	/**
 	 * Used by subclasses. Send the command to the server using the SocketChannel and return the result to the ByteBuffer.
 	 * 
@@ -116,6 +117,7 @@ public abstract class RRDCommand {
 		command += "\n";
 		InetSocketAddress server = new InetSocketAddress(serverAddress, serverPort);
 		SocketChannel channel = cache.get(server);
+		channel.socket().setSoTimeout(60000);
 		if(logger.isDebugEnabled()) {
 			logger.debug("Sending command : " + command);
 		}
@@ -124,11 +126,16 @@ public abstract class RRDCommand {
 		int bytesWritten = channel.write(sendBuffer);
 		if(logger.isTraceEnabled())
 			logger.trace("Sent " + bytesWritten + " bytes to " + server);
-		
+
 		boolean stillSomethingToRead = true;
 		while(stillSomethingToRead) {
 			logger.trace("There is still something to read");
-			int bytesRead = channel.read(receiveBuffer);
+			int bytesRead;
+			try {
+				bytesRead = channel.read(receiveBuffer);
+			} catch(SocketTimeoutException e) {
+				throw new RRDToolError("Socket timed out");
+			}
 			if(logger.isTraceEnabled())
 				logger.trace("Received " + bytesRead + " bytes from " + server);
 			int position = receiveBuffer.position();
@@ -152,7 +159,7 @@ public abstract class RRDCommand {
 				}
 			}
 		}
-		
+
 		receiveBuffer.flip();
 		if(logger.isTraceEnabled())
 			logger.trace("Received a total of " + receiveBuffer.limit() + " bytes from " + server);
@@ -163,7 +170,7 @@ public abstract class RRDCommand {
 		}
 		return receiveBuffer;
 	}
-	
+
 	/**
 	 * Used by subclasses. Verify if the server returned an error. If an error is detected, a RuntimException containing the error message is raised.
 	 * 
@@ -174,7 +181,7 @@ public abstract class RRDCommand {
 			throw new RuntimeException(line);
 		}
 	}
-	
+
 	/**
 	 * Used by subclasses. Parse the last line returned by the server to get execution time.
 	 * 

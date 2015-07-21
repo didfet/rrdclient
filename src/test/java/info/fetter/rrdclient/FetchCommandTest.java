@@ -53,8 +53,14 @@ public class FetchCommandTest {
 			String CF = "AVERAGE";
 			String[] args = new String[] {"--start" , "-1m", "--resolution", "86400"};
 			FetchCommand command = new FetchCommand(fileName, CF, args);
+			@SuppressWarnings("unused")
 			FetchServer server = new FetchServer(13900,new File(FetchServer.class.getClassLoader().getResource("FetchResponse1.txt").toURI()));
-			command.execute("localhost", 13900);
+			//command.execute("localhost", 13900);
+			command.setServerAddress("localhost");
+			command.setServerPort(13900);
+			command.execute();
+			System.out.println(command.getDataTable().toJSON());
+
 		} catch(Exception e) {
 			if(logger.isDebugEnabled())
 				e.printStackTrace();
@@ -67,6 +73,7 @@ public class FetchCommandTest {
 		String CF = "AVERAGE";
 		String[] args = new String[] {"--start" , "-1m", "--resolution", "86400"};
 		FetchCommand command = new FetchCommand(fileName, CF, args);
+		@SuppressWarnings("unused")
 		FetchServer server = new FetchServer(13902,new File(FetchServer.class.getClassLoader().getResource("FetchResponse2.txt").toURI()));
 		command.execute("localhost", 13902);
 	}

@@ -17,9 +17,12 @@ package info.fetter.rrdclient;
  *
  */
 
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.TimeZone;
 
 import org.apache.log4j.Logger;
 
@@ -165,5 +168,38 @@ public class DataTable<T> {
 	 */
 	public List<Date> getDates() {
 		return dateColumn;
+	}
+	
+	/**
+	 * Get a JSON representation of this table.
+	 * 
+	 * @return a JSON string
+	 */
+	public String toJSON() {
+		StringBuffer buffer = new StringBuffer();
+		TimeZone tz = TimeZone.getTimeZone("UTC");
+	    DateFormat formatter = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm'Z'");
+	    formatter.setTimeZone(tz);
+		buffer.append("[");
+		for(Date date : getDates()) {
+			buffer.append("{\"date\":\"");
+			buffer.append(formatter.format(date));
+			buffer.append("\"");
+			for(String column : getColumnNames()) {
+				buffer.append(",\"");
+				buffer.append(column);
+				buffer.append("\":");
+				String dataAsString = getData(column,date).toString();
+				if(dataAsString.equals("NaN")) {
+					buffer.append("\"NaN\"");
+				} else {
+					buffer.append(getData(column,date));
+				}
+			}
+			buffer.append("},");
+		}
+		buffer.setLength(buffer.length()-1); // remove last ","
+		buffer.append("]");
+		return buffer.toString();
 	}
 }
