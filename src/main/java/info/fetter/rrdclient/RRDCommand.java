@@ -39,7 +39,7 @@ public abstract class RRDCommand {
 	private static Logger logger = Logger.getLogger(RRDCommand.class);
 	private static ConnectionCache cache = new ConnectionCache();
 	protected InetAddress serverAddress;
-	protected int serverPort;
+	protected int serverPort, inactivityTimeout = 600000;
 	protected double userTime, systemTime;
 	String returnCode;
 
@@ -104,6 +104,14 @@ public abstract class RRDCommand {
 		this.serverPort = serverPort;
 	}
 
+	/**
+	 * Set RRD socket inactivity timeout.
+	 * 
+	 * @param inactivityTimeout the inactivityTimeout to set
+	 */
+	public void setInactivityTimeout(int inactivityTimeout) {
+		this.inactivityTimeout = inactivityTimeout;
+	}
 
 	/**
 	 * Used by subclasses. Send the command to the server using the SocketChannel and return the result to the ByteBuffer.
@@ -113,62 +121,70 @@ public abstract class RRDCommand {
 	 * @throws IOException
 	 */
 	protected ByteBuffer sendCommandToServer(String command) throws IOException {
-		boolean errorFound = false;
-		command += "\n";
 		InetSocketAddress server = new InetSocketAddress(serverAddress, serverPort);
-		SocketChannel channel = cache.get(server);
-		channel.socket().setSoTimeout(60000);
-		if(logger.isDebugEnabled()) {
-			logger.debug("Sending command : " + command);
-		}
-		ByteBuffer sendBuffer = ByteBuffer.wrap(command.getBytes());
-		ByteBuffer receiveBuffer = ByteBuffer.allocate(1024*1024);
-		int bytesWritten = channel.write(sendBuffer);
-		if(logger.isTraceEnabled())
-			logger.trace("Sent " + bytesWritten + " bytes to " + server);
+		try {
+			boolean errorFound = false;
+			command += "\n";
+			SocketChannel channel = cache.get(server, inactivityTimeout);
+			ByteBuffer receiveBuffer = ByteBuffer.allocate(1024*1024);
+			synchronized(channel) {
+				channel.socket().setSoTimeout(60000);
+				if(logger.isDebugEnabled()) {
+					logger.debug("Sending command : " + command);
+				}
+				ByteBuffer sendBuffer = ByteBuffer.wrap(command.getBytes());
 
-		boolean stillSomethingToRead = true;
-		while(stillSomethingToRead) {
-			logger.trace("There is still something to read");
-			int bytesRead;
-			try {
-				bytesRead = channel.read(receiveBuffer);
-			} catch(SocketTimeoutException e) {
-				throw new RRDToolError("Socket timed out");
-			}
-			if(logger.isTraceEnabled())
-				logger.trace("Received " + bytesRead + " bytes from " + server);
-			int position = receiveBuffer.position();
-			if(receiveBuffer.get(--position) == '\n') {
-				int lineStart = 0;
-				while(position > 0) {
-					byte previousByte = receiveBuffer.get(--position);
-					if(previousByte == 'O') {
-						lineStart = position;
-						break;
+				int bytesWritten = channel.write(sendBuffer);
+				if(logger.isTraceEnabled())
+					logger.trace("Sent " + bytesWritten + " bytes to " + server);
+
+				boolean stillSomethingToRead = true;
+				while(stillSomethingToRead) {
+					logger.trace("There is still something to read");
+					int bytesRead;
+					try {
+						bytesRead = channel.read(receiveBuffer);
+					} catch(SocketTimeoutException e) {
+						throw new RRDToolError("Socket timed out");
+					}
+					if(logger.isTraceEnabled())
+						logger.trace("Received " + bytesRead + " bytes from " + server);
+					int position = receiveBuffer.position();
+					if(receiveBuffer.get(--position) == '\n') {
+						int lineStart = 0;
+						while(position > 0) {
+							byte previousByte = receiveBuffer.get(--position);
+							if(previousByte == 'O') {
+								lineStart = position;
+								break;
+							}
+						}
+						if(receiveBuffer.get(lineStart) == 'O' && receiveBuffer.get(lineStart + 1) == 'K' && receiveBuffer.get(lineStart + 2) == ' ') {
+							stillSomethingToRead = false;
+							logger.trace("Found OK");
+						}
+						if(receiveBuffer.get(lineStart) == 'O' && receiveBuffer.get(lineStart + 1) == 'R' && receiveBuffer.get(lineStart + 2) == ':') {
+							stillSomethingToRead = false;
+							logger.trace("Found ERROR");
+							errorFound = true;
+						}
 					}
 				}
-				if(receiveBuffer.get(lineStart) == 'O' && receiveBuffer.get(lineStart + 1) == 'K' && receiveBuffer.get(lineStart + 2) == ' ') {
-					stillSomethingToRead = false;
-					logger.trace("Found OK");
-				}
-				if(receiveBuffer.get(lineStart) == 'O' && receiveBuffer.get(lineStart + 1) == 'R' && receiveBuffer.get(lineStart + 2) == ':') {
-					stillSomethingToRead = false;
-					logger.trace("Found ERROR");
-					errorFound = true;
-				}
 			}
-		}
 
-		receiveBuffer.flip();
-		if(logger.isTraceEnabled())
-			logger.trace("Received a total of " + receiveBuffer.limit() + " bytes from " + server);
-		if(errorFound) {
-			byte[] messageBuffer = new byte[receiveBuffer.limit()];
-			receiveBuffer.get(messageBuffer);
-			throw new RRDToolError(new String(messageBuffer));
+			receiveBuffer.flip();
+			if(logger.isTraceEnabled())
+				logger.trace("Received a total of " + receiveBuffer.limit() + " bytes from " + server);
+			if(errorFound) {
+				byte[] messageBuffer = new byte[receiveBuffer.limit()];
+				receiveBuffer.get(messageBuffer);
+				throw new RRDToolError(new String(messageBuffer));
+			}
+			return receiveBuffer;
+		} catch(IOException e) {
+			cache.remove(server);
+			throw e;
 		}
-		return receiveBuffer;
 	}
 
 	/**
