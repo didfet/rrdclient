@@ -51,7 +51,7 @@ public class GraphCommandTest {
 		try {
 			String[] args = new String[] {"-", "--imgformat=PNG", "--start=-86400", "--end=-300", "--title='toto'", "--base=1000", "--height=120", "--width=500", "--alt-autoscale-max", "--lower-limit=0", "--vertical-label='processes'", "--slope-mode", "--font", "TITLE:12:", "--font", "AXIS:8:", "--font", "LEGEND:10:", "--font", "UNIT:8:", "DEF:a=\"toto.rrd\":ucd_hrSystemProcess:AVERAGE AREA:a#F51D30FF:\"Running Processes\"", "GPRINT:a:LAST:\"Current\\:%8.0lf\"", "GPRINT:a:AVERAGE:\"Average\\:%8.0lf\"", "GPRINT:a:MAX:\"Maximum\\:%8.0lf\""};
 			GraphCommand command = new GraphCommand(args);
-			GraphServer server = new GraphServer(13901, new File(FetchServer.class.getClassLoader().getResource("GraphResponse1.png").toURI()));
+			new GraphServer(13901, new File(FetchServer.class.getClassLoader().getResource("GraphResponse1.png").toURI()));
 			command.execute("localhost", 13901);
 
 			ImageIO.write(command.getImage(), "png", new File("target/test2.png"));

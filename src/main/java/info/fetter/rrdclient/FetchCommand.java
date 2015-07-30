@@ -43,6 +43,7 @@ import org.apache.log4j.Logger;
  *
  */
 public class FetchCommand extends RRDCommand {
+	@SuppressWarnings("unused")
 	private static Logger logger = Logger.getLogger(FetchCommand.class);
 	String fileName, consolidationFunction;
 	String[] args;

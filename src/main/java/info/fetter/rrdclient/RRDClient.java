@@ -38,6 +38,7 @@ public class RRDClient {
 		RRDCommand rrdCommand;
 		
 		if(command.equals("graph")) {
+			@SuppressWarnings("unused")
 			String fileName = remainingArgs.remove(0);
 			rrdCommand = new GraphCommand(remainingArgs.toArray(new String[0]));
 		} else if(command.equals("fetch")) {

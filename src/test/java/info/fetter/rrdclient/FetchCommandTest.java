@@ -20,7 +20,6 @@ package info.fetter.rrdclient;
 import static org.apache.log4j.Level.*;
 import info.fetter.rrdclient.util.FetchServer;
 
-import java.util.Date;
 import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
