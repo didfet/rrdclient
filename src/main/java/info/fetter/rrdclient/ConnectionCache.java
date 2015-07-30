@@ -31,21 +31,29 @@ import java.util.Map;
  */
 public class ConnectionCache {
 	private Map<InetSocketAddress,ServerContext> channelMap = new HashMap<InetSocketAddress,ServerContext>();
-	
+
 	private void put(InetSocketAddress server, ServerContext context) {
-		channelMap.put(server, context);
+		synchronized(channelMap) {
+			channelMap.put(server, context);
+		}
 	}
-	
+
 	public void remove(InetSocketAddress server) {
 		try {
-			ServerContext context = channelMap.get(server);
+			ServerContext context;
+			synchronized(channelMap) {
+				context = channelMap.get(server);
+			}
 			if(context != null) {
 				context.close();
-				channelMap.remove(context);
+				synchronized(channelMap) {
+					channelMap.remove(context);
+				}
 			}
+
 		} catch(IOException e) {}
 	}
-	
+
 	/**
 	 * 
 	 * Returns a connection to the server. If the connection doesn't exist, it is created and put in the cache.
@@ -70,11 +78,11 @@ public class ConnectionCache {
 		}
 		return context.getChannel();
 	}
-	
+
 	private class ServerContext {
 		private SocketChannel channel;
 		private long lastUsed;
-		
+
 		public ServerContext(InetSocketAddress server) throws IOException {
 			channel = SocketChannel.open(server);
 			lastUsed = System.currentTimeMillis();
@@ -93,11 +101,11 @@ public class ConnectionCache {
 		public long getLastUsed() {
 			return lastUsed;
 		}
-		
+
 		public void updateLastUsed(long currentTime) {
 			lastUsed = currentTime;
 		}
-		
+
 		public void close() throws IOException {
 			channel.close();
 		}
