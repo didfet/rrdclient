@@ -47,7 +47,7 @@ public class ConnectionCache {
 			if(context != null) {
 				context.close();
 				synchronized(channelMap) {
-					channelMap.remove(context);
+					channelMap.remove(server);
 				}
 			}
 
